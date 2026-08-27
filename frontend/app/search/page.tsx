@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type FoodItem = {
   id: number;
   name: string;
@@ -14,27 +16,39 @@ type FoodItem = {
   };
 };
 
-async function getFoodItems(): Promise<FoodItem[]> {
-  const response = await fetch(`${process.env.API_URL}/food-items?limit=20`, {
-    cache: "no-store",
-  });
+async function searchFood(query: string): Promise<FoodItem[]> {
+  const response = await fetch(
+    `${process.env.API_URL}/food-items?search=${encodeURIComponent(query)}&limit=20`,
+    {
+      cache: "no-store",
+    },
+  );
 
   if (!response.ok) {
-    throw new Error("Failed to fetch food items");
+    throw new Error("Failed to search food");
   }
 
   return response.json();
 }
 
-export default async function Home() {
-  const foodItems = await getFoodItems();
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const params = await searchParams;
+  const query = params.q?.trim() ?? "";
+
+  const foodItems = query ? await searchFood(query) : [];
 
   return (
     <main className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <h1 className="text-2xl font-bold text-gray-900">Foodie</h1>
+          <Link href="/" className="text-2xl font-bold text-gray-900">
+            Foodie
+          </Link>
 
           <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Log in
@@ -42,53 +56,52 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Search */}
       <section className="bg-gray-50">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="max-w-3xl">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">
-              Discover food, not just restaurants
-            </p>
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <Link
+            href="/"
+            className="mb-4 inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
+            ← Back to home
+          </Link>
 
-            <h2 className="text-5xl font-bold tracking-tight text-gray-900">
-              Find out what&apos;s actually worth eating.
-            </h2>
+          <h2 className="text-3xl font-bold text-gray-900">Search food</h2>
 
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Discover dishes people love, read reviews from real diners, and
-              find your next favorite meal.
-            </p>
-
-            <form action="/search" className="mt-8 flex max-w-2xl">
-              <input
-                name="q"
-                type="text"
-                placeholder="Search for biryani, dosa, pizza..."
-                className="w-full rounded-l-xl border border-gray-300 bg-white px-5 py-4 text-gray-900 outline-none focus:border-gray-500"
-              />
-
-              <button
-                type="submit"
-                className="rounded-r-xl bg-gray-900 px-7 py-4 font-medium text-white hover:bg-gray-800"
-              >
-                Search
-              </button>
-            </form>
-          </div>
+          <form action="/search" className="mt-6 flex max-w-2xl">
+            ...
+          </form>
         </div>
       </section>
 
-      {/* Food */}
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="mb-8">
-          <h3 className="text-2xl font-bold text-gray-900">
-            Popular food in Chennai
-          </h3>
+      {/* Results */}
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        {query && (
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-gray-900">
+              Results for &quot;{query}&quot;
+            </h3>
 
-          <p className="mt-2 text-gray-600">
-            See what people are eating and reviewing.
-          </p>
-        </div>
+            <p className="mt-2 text-gray-600">
+              {foodItems.length} {foodItems.length === 1 ? "result" : "results"}{" "}
+              found
+            </p>
+          </div>
+        )}
+
+        {!query && (
+          <p className="text-gray-600">Enter a food name to search.</p>
+        )}
+
+        {query && foodItems.length === 0 && (
+          <div className="rounded-2xl border border-gray-200 p-10 text-center">
+            <p className="text-lg font-medium text-gray-900">No food found</p>
+
+            <p className="mt-2 text-gray-500">
+              Try searching for something else.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {foodItems.map((food) => (
