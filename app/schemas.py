@@ -94,6 +94,18 @@ class FoodItemRead(FoodItemBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class FoodItemRestaurantRead(BaseModel):
+    id: int
+    name: str
+    city: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FoodItemWithRestaurantRead(FoodItemRead):
+    restaurant: FoodItemRestaurantRead
+
+
 class ReviewBase(BaseModel):
     rating: int = Field(ge=1, le=5)
     body: str | None = Field(default=None, max_length=5000)

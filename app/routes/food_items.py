@@ -2,12 +2,18 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import FoodItem, Restaurant, User
-from app.schemas import FoodItemCreate, FoodItemRead, normalize_food_item_name
+from app.schemas import (
+    FoodItemCreate,
+    FoodItemRead,
+    FoodItemWithRestaurantRead,
+    normalize_food_item_name,
+)
 
 router = APIRouter(tags=["food-items"])
 
@@ -69,6 +75,35 @@ def create_food_item(
     db.refresh(food_item)
     return food_item
 
+@router.get(
+    "/food-items",
+    response_model=list[FoodItemWithRestaurantRead],
+)
+def list_food_items(
+    db: Annotated[Session, Depends(get_db)],
+    page: PageParam = 1,
+    limit: LimitParam = 20,
+    search: str | None = None,
+) -> list[FoodItem]:
+    offset = (page - 1) * limit
+
+    statement = select(FoodItem)
+
+    if search:
+        search_term = normalize_food_item_name(search)
+        statement = statement.where(
+            FoodItem.normalized_name.contains(search_term)
+        )
+
+    statement = (
+        statement
+        .options(joinedload(FoodItem.restaurant))
+        .order_by(FoodItem.average_rating.desc(), FoodItem.id)
+        .offset(offset)
+        .limit(limit)
+    )
+
+    return list(db.scalars(statement))
 
 @router.get("/food-items/{food_item_id}", response_model=FoodItemRead)
 def get_food_item(food_item_id: int, db: Annotated[Session, Depends(get_db)]) -> FoodItem:
