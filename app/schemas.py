@@ -131,6 +131,12 @@ class ReviewUpdate(BaseModel):
     body: str | None = Field(default=None, max_length=5000)
     would_order_again: bool | None = None
 
+class ReviewUserRead(BaseModel):
+    id: int
+    username: str
+    display_name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 class ReviewRead(ReviewBase):
     id: int
@@ -138,5 +144,6 @@ class ReviewRead(ReviewBase):
     food_item_id: int
     created_at: datetime
     updated_at: datetime
+    user: ReviewUserRead
 
     model_config = ConfigDict(from_attributes=True)

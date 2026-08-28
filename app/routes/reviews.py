@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import Annotated
+from sqlalchemy.orm import joinedload
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
@@ -42,12 +43,13 @@ def list_food_item_reviews(
 
     offset = (page - 1) * limit
     statement = (
-        select(Review)
-        .where(Review.food_item_id == food_item_id)
-        .order_by(Review.created_at.desc(), Review.id.desc())
-        .offset(offset)
-        .limit(limit)
-    )
+    select(Review)
+    .options(joinedload(Review.user))
+    .where(Review.food_item_id == food_item_id)
+    .order_by(Review.created_at.desc())
+    .offset(offset)
+    .limit(limit)
+)
     return list(db.scalars(statement))
 
 

@@ -105,10 +105,24 @@ def list_food_items(
 
     return list(db.scalars(statement))
 
-@router.get("/food-items/{food_item_id}", response_model=FoodItemRead)
-def get_food_item(food_item_id: int, db: Annotated[Session, Depends(get_db)]) -> FoodItem:
-    food_item = db.get(FoodItem, food_item_id)
-    if food_item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Food item not found")
-    return food_item
+@router.get(
+    "/food-items/{food_item_id}",
+    response_model=FoodItemWithRestaurantRead,
+)
+def get_food_item(
+    food_item_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> FoodItem:
+    food_item = db.scalar(
+        select(FoodItem)
+        .options(joinedload(FoodItem.restaurant))
+        .where(FoodItem.id == food_item_id)
+    )
 
+    if food_item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food item not found",
+        )
+
+    return food_item

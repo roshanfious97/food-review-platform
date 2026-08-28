@@ -34,7 +34,7 @@ export default async function Home() {
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <h1 className="text-2xl font-bold text-gray-900">Foodie</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Foodie Log</h1>
 
           <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Log in
